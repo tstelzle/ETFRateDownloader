@@ -77,7 +77,7 @@ def delete_old_files():
     global download_dir
     for reading_file in os.listdir(download_dir):
         root, extension = os.path.splitext(reading_file)
-        if extension == ".csv":
+        if extension == ".csv" or extension == ".error":
             os.remove(os.path.join(download_dir, reading_file))
 
 
@@ -105,7 +105,8 @@ if __name__ == '__main__':
             print("Downloaded: " + link)
         except Exception:
             print('Error downloading: ' + link)
-            os.mknod(os.path.join(download_dir, "ERROR_" + format_link(link) + '.txt'))
+            os.mknod(os.path.join(download_dir, format_link(link) + '.error'))
+            pass
 
     for file in os.listdir(download_dir):
         os.chmod(os.path.join(download_dir, file), 0o777)
