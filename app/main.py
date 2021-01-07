@@ -8,6 +8,12 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 
+download_dir = "/run/ETFRateDownloader/downloads"
+
+
+def format_link(given_link: str):
+    return given_link.replace('.', '-').replace('/', '_')
+
 
 def read_links():
     links_file = open('links.txt', 'r')
@@ -57,8 +63,9 @@ def download_etf_data(my_driver):
 
 
 def create_today_dir():
+    global download_dir
     today = date.today().strftime("%Y-%m-%d")
-    new_download_dir = "/run/ETFRateDownloader/downloads/" + today
+    new_download_dir = download_dir + today
     if not os.path.exists(new_download_dir):
         os.mkdir(new_download_dir)
         os.chmod(new_download_dir, 0o777)
@@ -66,8 +73,16 @@ def create_today_dir():
     return new_download_dir
 
 
+def delete_old_files():
+    global download_dir
+    for reading_file in os.listdir(download_dir):
+        root, extension = os.path.splitext(reading_file)
+        if extension == ".csv":
+            os.remove(os.path.join(download_dir, reading_file))
+
+
 if __name__ == '__main__':
-    download_dir = create_today_dir()
+    delete_old_files()
 
     options = Options()
     options.headless = True
@@ -90,6 +105,7 @@ if __name__ == '__main__':
             print("Downloaded: " + link)
         except Exception:
             print('Error downloading: ' + link)
+            os.mknod(os.path.join(download_dir, "ERROR_" + format_link(link) + '.txt'))
 
     for file in os.listdir(download_dir):
         os.chmod(os.path.join(download_dir, file), 0o777)
