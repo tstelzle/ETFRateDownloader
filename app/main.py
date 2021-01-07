@@ -1,14 +1,18 @@
+import os
+from datetime import date
+
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 
+
 def read_links():
-    file = open('links.txt', 'r')
+    links_file = open('links.txt', 'r')
     etf_links = []
-    for line in file:
+    for line in links_file:
         etf_links.append(line)
 
     return etf_links
@@ -16,7 +20,7 @@ def read_links():
 
 def accept_cookie_consent(my_driver):
     try:
-        WebDriverWait(my_driver, 5).until(EC.visibility_of_element_located((By.ID, 'sp_message_container_213940')))
+        WebDriverWait(my_driver, 5).until(ec.visibility_of_element_located((By.ID, 'sp_message_container_213940')))
         iframe = my_driver.find_element_by_xpath("//iframe[@id = 'sp_message_iframe_213940']")
         my_driver.switch_to.frame(iframe)
         buttons = my_driver.find_elements_by_tag_name('button')
@@ -52,13 +56,25 @@ def download_etf_data(my_driver):
     return my_driver
 
 
+def create_today_dir():
+    today = date.today().strftime("%Y-%m-%d")
+    new_download_dir = "/run/ETFRateDownloader/downloads/" + today
+    if not os.path.exists(new_download_dir):
+        os.mkdir(new_download_dir)
+        os.chmod(new_download_dir, 0o777)
+
+    return new_download_dir
+
+
 if __name__ == '__main__':
+    download_dir = create_today_dir()
+
     options = Options()
     options.headless = True
     profile = webdriver.FirefoxProfile()
     profile.set_preference("browser.download.folderList", 2)
     profile.set_preference("browser.download.manager.showWhenStarting", False)
-    profile.set_preference("browser.download.dir", '/run/ETFRateDownloader/downloads')
+    profile.set_preference("browser.download.dir", download_dir)
     profile.set_preference("browser.helperApps.neverAsk.openFile", "text/csv,application/vnd.ms-excel")
     profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "text/csv,application/vnd.ms-excel")
 
@@ -67,9 +83,15 @@ if __name__ == '__main__':
     links = read_links()
 
     for link in links:
-        print(link)
-        driver.get(link)
-        driver = accept_cookie_consent(driver)
-        driver = download_etf_data(driver)
+        try:
+            driver.get(link)
+            driver = accept_cookie_consent(driver)
+            driver = download_etf_data(driver)
+            print("Downloaded: " + link)
+        except Exception:
+            print('Error downloading: ' + link)
+
+    for file in os.listdir(download_dir):
+        os.chmod(os.path.join(download_dir, file), 0o777)
 
     driver.close()

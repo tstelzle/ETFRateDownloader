@@ -12,7 +12,7 @@ RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckod
 RUN tar -zxf geckodriver-v0.26.0-linux64.tar.gz -C /usr/bin
 
 WORKDIR /run/ETFRateDownloader
-COPY ./ ./
+COPY requirements.txt ./
 RUN mkdir -p /run/ETFRateDownloader/downloads
 RUN chown -R 1000:1000 /run/ETFRateDownloader/downloads
 
@@ -22,5 +22,6 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 VOLUME /run/ETFRateDownloader
 VOLUME /run/ETFRateDownloader/downloads
+VOLUME /run/ETFRateDownloader
 
 ENTRYPOINT ["python", "/run/ETFRateDownloader/main.py"]
