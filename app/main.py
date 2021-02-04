@@ -26,8 +26,8 @@ def read_links():
 
 def accept_cookie_consent(my_driver):
     try:
-        WebDriverWait(my_driver, 5).until(ec.visibility_of_element_located((By.ID, 'sp_message_container_213940')))
-        iframe = my_driver.find_element_by_xpath("//iframe[@id = 'sp_message_iframe_213940']")
+        WebDriverWait(my_driver, 5).until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[id^=sp_message_container_')))
+        iframe = my_driver.find_element_by_css_selector("iframe[id^=sp_message_iframe_")
         my_driver.switch_to.frame(iframe)
         buttons = my_driver.find_elements_by_tag_name('button')
 

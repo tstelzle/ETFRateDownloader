@@ -1,8 +1,8 @@
 # MAKEFILE https://github.com/tstelzle/ETFRateDownloader
 # AUTHORS: Tarek Stelzle
 
-MOUNT-DIR := $(pwd)
-LINK-FILE := $(pwd)/app/links.txt
+MOUNT-DIR := $(PWD)/downloads
+LINK-FILE := $(PWD)/downloads/links.txt
 APP-DIR := $(PWD)/app
 IMAGE-NAME := etf-rate-downloader_image
 CONTAINER-NAME := etfRateDownloader
