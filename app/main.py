@@ -111,4 +111,4 @@ if __name__ == '__main__':
     for file in os.listdir(download_dir):
         os.chmod(os.path.join(download_dir, file), 0o777)
 
-    driver.close()
+    driver.quit()
