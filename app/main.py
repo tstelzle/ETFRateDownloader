@@ -1,5 +1,6 @@
 import os
 from datetime import date
+from datetime import datetime
 
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
@@ -103,8 +104,8 @@ if __name__ == '__main__':
             driver = accept_cookie_consent(driver)
             driver = download_etf_data(driver)
             print("Downloaded: " + link)
-        except Exception:
-            print('Error downloading: ' + link)
+        except Exception as e:
+            print(datetime.now(), '- Error downloading:', link, e)
             os.mknod(os.path.join(download_dir, format_link(link) + '.error'))
             pass
 
