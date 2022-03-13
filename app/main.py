@@ -103,7 +103,7 @@ if __name__ == '__main__':
             driver.get(link)
             driver = accept_cookie_consent(driver)
             driver = download_etf_data(driver)
-            print(datetime.now(), "Downloaded:", link)
+            print(datetime.now(), "- Downloaded:", link)
         except Exception as e:
             print(datetime.now(), '- Error downloading:', link, e)
             os.mknod(os.path.join(download_dir, format_link(link) + '.error'))
