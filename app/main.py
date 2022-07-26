@@ -53,11 +53,20 @@ def download_etf_data(my_driver):
     min_time.clear()
     min_time.send_keys('1.1.2018')
 
+    bottom_news_letter = my_driver.find_element_by_id("bottomNewsletterHintOuter")
+    try:
+        if bottom_news_letter.is_displayed():
+            bottom_news_letter.click()
+            my_driver.find_element_by_xpath("/html/body/div[3]/div/span").click()
+    except Exception as ex:
+        log("Error", ex)
+
     inputs = my_driver.find_elements_by_tag_name('input')
     my_input = None
     for input_tag in inputs:
         if input_tag.get_attribute('value') == 'Download':
             my_input = input_tag
+
     my_input.click()
 
     return my_driver
@@ -82,6 +91,10 @@ def delete_old_files():
             os.remove(os.path.join(download_dir, reading_file))
 
 
+def log(*msg) -> None:
+    print(datetime.now(), *msg, sep=" ")
+
+
 if __name__ == '__main__':
     delete_old_files()
 
@@ -103,9 +116,9 @@ if __name__ == '__main__':
             driver.get(link)
             driver = accept_cookie_consent(driver)
             driver = download_etf_data(driver)
-            print(datetime.now(), "- Downloaded:", link)
+            log("- Downloaded:", link)
         except Exception as e:
-            print(datetime.now(), '- Error downloading:', link, e)
+            log('- Error downloading:', link, e)
             os.mknod(os.path.join(download_dir, format_link(link) + '.error'))
             pass
 
