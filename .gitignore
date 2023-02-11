@@ -3,3 +3,5 @@
 /**/*.txt
 venv/
 /**/*.log
+/**/credentials.txt
+/**/links.error

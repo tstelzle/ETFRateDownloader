@@ -12,31 +12,31 @@ DOWNLOAD_DIR = "/run/ETFRateDownloader/downloads"
 
 ERROR_FILE = "links.error"
 LOG_FILE = "etf.log"
+CREDENTIALS_FILE = "credentials.txt"
 
 
-def read_links():
-    links_file = open('links.txt', 'r')
-    etf_links = []
+def read_file(file_name: str):
+    try:
+        links_file = open(file_name, 'r')
+    except FileNotFoundError as ex:
+        logging.error(ex)
+        quit(-1)
+    lines = []
     for line in links_file:
-        etf_links.append(line)
+        lines.append(line)
 
-    return etf_links
+    return lines
 
 
-def accept_cookie_consent(my_driver):
+def accept_init_popup(my_driver):
     try:
         WebDriverWait(my_driver, 5).until(
             ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[id^=sp_message_container_')))
         iframe = my_driver.find_element_by_css_selector("iframe[id^=sp_message_iframe_")
         my_driver.switch_to.frame(iframe)
-        buttons = my_driver.find_elements_by_tag_name('button')
 
-        my_button = None
-        for button in buttons:
-            if button.get_attribute('title') == 'Zustimmen':
-                my_button = button
-        if my_button:
-            my_button.click()
+        element = my_driver.find_element_by_xpath("//*[text()='Akzeptieren und weiter']")
+        element.click()
 
         my_driver.switch_to.default_content()
 
@@ -45,6 +45,39 @@ def accept_cookie_consent(my_driver):
         return my_driver
     except TimeoutException:
         return my_driver
+
+
+def login_to_ariva(my_driver):
+    username, password = read_file(CREDENTIALS_FILE)
+
+    my_driver.get("https://www.ariva.de/")
+
+    accept_init_popup(my_driver)
+    element = my_driver.find_element_by_class_name("sprite-login")
+    element.click()
+
+    anmelden_button = None
+    username_element = None
+    input_elements = my_driver.find_elements_by_tag_name("input")
+    for el in input_elements:
+        if el.get_attribute("name") == "ISID":
+            username_element = el
+            continue
+        if el.get_attribute("type") == "submit":
+            anmelden_button = el
+            continue
+
+    if username_element is None:
+        logging.error("Username Element Not Found.")
+
+    pw_element = my_driver.find_element_by_id("pw")
+
+    username_element.send_keys(username.rstrip())
+    pw_element.send_keys(password.rstrip())
+
+    anmelden_button.click()
+
+    return my_driver
 
 
 def download_etf_data(my_driver):
@@ -100,14 +133,15 @@ if __name__ == '__main__':
 
     driver = webdriver.Firefox(options=options, firefox_profile=profile)
 
-    links = read_links()
+    login_to_ariva(driver)
+    links = read_file("links.txt")
 
     os.mknod(os.path.join(DOWNLOAD_DIR, ERROR_FILE), 0o777)
 
     for link in links:
         try:
             driver.get(link)
-            driver = accept_cookie_consent(driver)
+            driver = accept_init_popup(driver)
             driver = download_etf_data(driver)
             logging.info("Downloaded: {0}".format(link))
         except Exception as e:
