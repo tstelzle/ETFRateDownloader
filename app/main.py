@@ -10,7 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 DOWNLOAD_DIR = "/run/ETFRateDownloader/downloads"
 
-ERROR_FILE = "links.error"
+ERROR_FILE = "links.exception"
 LOG_FILE = "etf.log"
 CREDENTIALS_FILE = "credentials.txt"
 
