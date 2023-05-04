@@ -136,7 +136,10 @@ if __name__ == '__main__':
     login_to_ariva(driver)
     links = read_file("links.txt")
 
-    os.mknod(os.path.join(DOWNLOAD_DIR, ERROR_FILE), 0o777)
+    try:
+        os.mknod(os.path.join(DOWNLOAD_DIR, ERROR_FILE), 0o777)
+    except FileExistsError as e:
+        pass
 
     for link in links:
         try:
