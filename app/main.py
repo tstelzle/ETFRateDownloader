@@ -8,7 +8,8 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 
-DOWNLOAD_DIR = "/run/ETFRateDownloader/downloads"
+# DOWNLOAD_DIR = "/run/ETFRateDownloader/downloads"
+DOWNLOAD_DIR = "./"
 
 ERROR_FILE = "links.exception"
 LOG_FILE = "etf.log"
@@ -48,34 +49,36 @@ def accept_init_popup(my_driver):
 
 
 def login_to_ariva(my_driver):
-    username, password = read_file(CREDENTIALS_FILE)
+    try:
+        username, password = read_file(CREDENTIALS_FILE)
 
-    my_driver.get("https://www.ariva.de/")
+        my_driver.get("https://www.ariva.de/")
 
-    accept_init_popup(my_driver)
-    element = my_driver.find_element_by_class_name("sprite-login")
-    element.click()
+        accept_init_popup(my_driver)
+        my_driver.get("https://www.ariva.de/user/login/")
 
-    anmelden_button = None
-    username_element = None
-    input_elements = my_driver.find_elements_by_tag_name("input")
-    for el in input_elements:
-        if el.get_attribute("name") == "ISID":
-            username_element = el
-            continue
-        if el.get_attribute("type") == "submit":
-            anmelden_button = el
-            continue
+        anmelden_button = None
+        username_element = None
+        input_elements = my_driver.find_elements_by_tag_name("input")
+        for el in input_elements:
+            if el.get_attribute("name") == "ISID":
+                username_element = el
+                continue
+            if el.get_attribute("type") == "submit":
+                anmelden_button = el
+                continue
 
-    if username_element is None:
-        logging.error("Username Element Not Found.")
+        if username_element is None:
+            logging.error("Username Element Not Found.")
 
-    pw_element = my_driver.find_element_by_id("pw")
+        pw_element = my_driver.find_element_by_id("pw")
 
-    username_element.send_keys(username.rstrip())
-    pw_element.send_keys(password.rstrip())
+        username_element.send_keys(username.rstrip())
+        pw_element.send_keys(password.rstrip())
 
-    anmelden_button.click()
+        anmelden_button.click()
+    except Exception as e:
+        logging.error(e)
 
     return my_driver
 
@@ -123,7 +126,7 @@ if __name__ == '__main__':
     delete_old_files()
 
     options = Options()
-    options.headless = True
+    # options.headless = True
     profile = webdriver.FirefoxProfile()
     profile.set_preference("browser.download.folderList", 2)
     profile.set_preference("browser.download.manager.showWhenStarting", False)
