@@ -8,8 +8,7 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 
-# DOWNLOAD_DIR = "/run/ETFRateDownloader/downloads"
-DOWNLOAD_DIR = "./"
+DOWNLOAD_DIR = "/run/ETFRateDownloader/downloads"
 
 ERROR_FILE = "links.exception"
 LOG_FILE = "etf.log"
@@ -126,7 +125,7 @@ if __name__ == '__main__':
     delete_old_files()
 
     options = Options()
-    # options.headless = True
+    options.headless = True
     profile = webdriver.FirefoxProfile()
     profile.set_preference("browser.download.folderList", 2)
     profile.set_preference("browser.download.manager.showWhenStarting", False)
