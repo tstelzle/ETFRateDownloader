@@ -6,7 +6,7 @@ RUN wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.30-r0/
 RUN apk add glibc-2.30-r0.apk
 RUN apk add glibc-bin-2.30-r0.apk
 
-RUN apk add firefox=85.0.2-r0
+RUN apk add firefox=89.0.1-r0
 RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.29.0/geckodriver-v0.29.0-linux64.tar.gz
 RUN tar -zxf geckodriver-v0.29.0-linux64.tar.gz -C /usr/bin
 
