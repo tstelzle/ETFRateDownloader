@@ -32,10 +32,10 @@ def accept_init_popup(my_driver):
     try:
         WebDriverWait(my_driver, 5).until(
             ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[id^=sp_message_container_')))
-        iframe = my_driver.find_element_by_css_selector("iframe[id^=sp_message_iframe_")
+        iframe = my_driver.find_element(By.CSS_SELECTOR, "iframe[id^=sp_message_iframe_")
         my_driver.switch_to.frame(iframe)
 
-        element = my_driver.find_element_by_xpath("//*[text()='Akzeptieren und weiter']")
+        element = my_driver.find_element(By.XPATH, "//*[text()='Akzeptieren und weiter']")
         element.click()
 
         my_driver.switch_to.default_content()
@@ -58,7 +58,7 @@ def login_to_ariva(my_driver):
 
         anmelden_button = None
         username_element = None
-        input_elements = my_driver.find_elements_by_tag_name("input")
+        input_elements = my_driver.find_elements(By.TAG_NAME, "input")
         for el in input_elements:
             if el.get_attribute("name") == "ISID":
                 username_element = el
@@ -70,7 +70,7 @@ def login_to_ariva(my_driver):
         if username_element is None:
             logging.error("Username Element Not Found.")
 
-        pw_element = my_driver.find_element_by_id("pw")
+        pw_element = my_driver.find_element(By.ID, "pw")
 
         username_element.send_keys(username.rstrip())
         pw_element.send_keys(password.rstrip())
@@ -83,19 +83,19 @@ def login_to_ariva(my_driver):
 
 
 def download_etf_data(my_driver):
-    min_time = driver.find_element_by_id('minTime')
+    min_time = my_driver.find_element(By.ID, 'minTime')
     min_time.clear()
     min_time.send_keys('1.1.2018')
 
-    bottom_news_letter = my_driver.find_element_by_id("bottomNewsletterHintOuter")
+    bottom_news_letter = my_driver.find_element(By.ID, "bottomNewsletterHintOuter")
     try:
         if bottom_news_letter.is_displayed():
             bottom_news_letter.click()
-            my_driver.find_element_by_xpath("/html/body/div[3]/div/span").click()
+            my_driver.find_element(By.XPATH, "/html/body/div[3]/div/span").click()
     except Exception as ex:
         logging.error(ex)
 
-    inputs = my_driver.find_elements_by_tag_name('input')
+    inputs = my_driver.find_elements(By.TAG_NAME, 'input')
     my_input = None
     for input_tag in inputs:
         if input_tag.get_attribute('value') == 'Download':
