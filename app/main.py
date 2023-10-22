@@ -56,26 +56,17 @@ def login_to_ariva(my_driver):
         accept_init_popup(my_driver)
         my_driver.get("https://www.ariva.de/user/login/")
 
-        anmelden_button = None
-        username_element = None
-        input_elements = my_driver.find_elements(By.TAG_NAME, "input")
-        for el in input_elements:
-            if el.get_attribute("name") == "ISID":
-                username_element = el
-                continue
-            if el.get_attribute("type") == "submit":
-                anmelden_button = el
-                continue
+        username_element = my_driver.find_element_by_id("username")
+        pw_element = my_driver.find_element_by_id("password")
+        submit_element = my_driver.find_element_by_id("submit")
 
-        if username_element is None:
-            logging.error("Username Element Not Found.")
-
-        pw_element = my_driver.find_element(By.ID, "pw")
+        if username_element is None or pw_element is None or submit_element is None:
+            logging.error("Could not login. Login Element Null.")
 
         username_element.send_keys(username.rstrip())
         pw_element.send_keys(password.rstrip())
 
-        anmelden_button.click()
+        submit_element.click()
     except Exception as e:
         logging.error(e)
 
