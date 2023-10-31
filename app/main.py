@@ -56,9 +56,17 @@ def login_to_ariva(my_driver):
         accept_init_popup(my_driver)
         my_driver.get("https://www.ariva.de/user/login/")
 
-        username_element = my_driver.find_element_by_id("username")
-        pw_element = my_driver.find_element_by_id("password")
-        submit_element = my_driver.find_element_by_id("submit")
+        check_password_button = my_driver.find_element(By.NAME, "form_input")
+        if check_password_button is not None:
+            mail_input = my_driver.find_element(By.NAME, "id")
+            mail_input.send_keys(username)
+            check_password_button.click()
+
+        my_driver.implicitly_wait(2)
+
+        username_element = my_driver.find_element(By.ID, "username")
+        pw_element = my_driver.find_element(By.ID, "password")
+        submit_element = my_driver.find_element(By.ID, "submit")
 
         if username_element is None or pw_element is None or submit_element is None:
             logging.error("Could not login. Login Element Null.")
@@ -111,7 +119,8 @@ def append_to_file(input_file: str, input_string: str) -> None:
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s', filename=os.path.join(DOWNLOAD_DIR, LOG_FILE), encoding="utf-8", level=logging.INFO)
+    logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s', filename=os.path.join(DOWNLOAD_DIR, LOG_FILE),
+                        encoding="utf-8", level=logging.INFO)
 
     delete_old_files()
 
