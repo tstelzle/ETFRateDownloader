@@ -1,18 +1,21 @@
 import logging
 import os
 
+import requests
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import WebDriverWait
 
 DOWNLOAD_DIR = "/run/ETFRateDownloader/downloads"
 
 ERROR_FILE = "links.exception"
 LOG_FILE = "etf.log"
-CREDENTIALS_FILE = "credentials.txt"
+API_URL = "https://www.ariva.de/quote/historic/historic.csv?secu={secu_id}&boerse_id={boerse_id}&clean_split=1&clean_payout=1&clean_bezug=1&min_time=01.01.2018&max_time=07.11.2023&trenner=%3B&go=Download"
+PRIORITIZED_BOERSE_IDS = [45]
 
 
 def read_file(file_name: str):
@@ -47,62 +50,16 @@ def accept_init_popup(my_driver):
         return my_driver
 
 
-def login_to_ariva(my_driver):
-    try:
-        username, password = read_file(CREDENTIALS_FILE)
-
-        my_driver.get("https://www.ariva.de/")
-
-        accept_init_popup(my_driver)
-        my_driver.get("https://www.ariva.de/user/login/")
-
-        check_password_button = my_driver.find_element(By.NAME, "form_input")
-        if check_password_button is not None:
-            mail_input = my_driver.find_element(By.NAME, "id")
-            mail_input.send_keys(username)
-            check_password_button.click()
-
-        my_driver.implicitly_wait(2)
-
-        username_element = my_driver.find_element(By.ID, "username")
-        pw_element = my_driver.find_element(By.ID, "password")
-        submit_element = my_driver.find_element(By.ID, "submit")
-
-        if username_element is None or pw_element is None or submit_element is None:
-            logging.error("Could not login. Login Element Null.")
-
-        username_element.send_keys(username.rstrip())
-        pw_element.send_keys(password.rstrip())
-
-        submit_element.click()
-    except Exception as e:
-        logging.error(e)
-
-    return my_driver
-
-
-def download_etf_data(my_driver):
-    min_time = my_driver.find_element(By.ID, 'minTime')
-    min_time.clear()
-    min_time.send_keys('1.1.2018')
-
-    bottom_news_letter = my_driver.find_element(By.ID, "bottomNewsletterHintOuter")
-    try:
-        if bottom_news_letter.is_displayed():
-            bottom_news_letter.click()
-            my_driver.find_element(By.XPATH, "/html/body/div[3]/div/span").click()
-    except Exception as ex:
-        logging.error(ex)
-
-    inputs = my_driver.find_elements(By.TAG_NAME, 'input')
-    my_input = None
-    for input_tag in inputs:
-        if input_tag.get_attribute('value') == 'Download':
-            my_input = input_tag
-
-    my_input.click()
-
-    return my_driver
+def download_etf_data_from_api(secu_id: int, boerse_id: int):
+    url = API_URL.format(secu_id=secu_id, boerse_id=boerse_id)
+    response = requests.get(url)
+    if response.status_code == 200:
+        filename = response.headers.get("Content-Disposition").split("=")[1]
+        filename_with_directory = f"{DOWNLOAD_DIR}/{filename}"
+        with open(filename_with_directory, "wb") as f:
+            f.write(response.content)
+    else:
+        raise Exception(f"Failed to download file: {response.status_code}")
 
 
 def delete_old_files():
@@ -118,6 +75,33 @@ def append_to_file(input_file: str, input_string: str) -> None:
         file_to_append.write(input_string)
 
 
+def get_secu_id(my_driver) -> int:
+    a_tag = my_driver.find_element(By.XPATH, '//a[@aria-label="TODO"]')
+    if a_tag is not None:
+        return a_tag.get_attribute("href").split("=")[1]
+
+    return -1
+
+
+def get_boerse_id(my_driver) -> int:
+    boerse_ids = []
+    selected_id = -1
+    select = Select(my_driver.find_element(By.XPATH, '//select[@name="boerse_id"]'))
+    for option in select.options:
+        current_id = int(option.get_attribute("value"))
+        boerse_ids.append(current_id)
+        selected = option.get_attribute("selected")
+        if selected is not None:
+            selected_id = current_id
+
+    common_boerse_ids = [element for element in PRIORITIZED_BOERSE_IDS if element in boerse_ids]
+
+    if common_boerse_ids:
+        return common_boerse_ids[0]
+    else:
+        return selected_id
+
+
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s', filename=os.path.join(DOWNLOAD_DIR, LOG_FILE),
                         encoding="utf-8", level=logging.INFO)
@@ -125,17 +109,10 @@ if __name__ == '__main__':
     delete_old_files()
 
     options = Options()
-    options.headless = True
-    profile = webdriver.FirefoxProfile()
-    profile.set_preference("browser.download.folderList", 2)
-    profile.set_preference("browser.download.manager.showWhenStarting", False)
-    profile.set_preference("browser.download.dir", DOWNLOAD_DIR)
-    profile.set_preference("browser.helperApps.neverAsk.openFile", "text/csv,application/vnd.ms-excel")
-    profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "text/csv,application/vnd.ms-excel")
+    options.add_argument("--headless")
 
-    driver = webdriver.Firefox(options=options, firefox_profile=profile)
+    driver = webdriver.Firefox(options=options)
 
-    login_to_ariva(driver)
     links = read_file("links.txt")
 
     try:
@@ -147,7 +124,11 @@ if __name__ == '__main__':
         try:
             driver.get(link)
             driver = accept_init_popup(driver)
-            driver = download_etf_data(driver)
+            secu_id = get_secu_id(driver)
+            if secu_id == -1:
+                raise Exception("Secu ID Not Found.")
+            boerse_id = get_boerse_id(driver)
+            download_etf_data_from_api(secu_id, boerse_id)
             logging.info("Downloaded: {0}".format(link))
         except Exception as e:
             logging.error("Downloading {0} with {1}".format(link, e))
