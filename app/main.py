@@ -9,12 +9,13 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import WebDriverWait
+from datetime import datetime
 
 DOWNLOAD_DIR = "/run/ETFRateDownloader/downloads"
 
 ERROR_FILE = "links.exception"
 LOG_FILE = "etf.log"
-API_URL = "https://www.ariva.de/quote/historic/historic.csv?secu={secu_id}&boerse_id={boerse_id}&clean_split=1&clean_payout=1&clean_bezug=1&min_time=01.01.2018&max_time=07.11.2023&trenner=%3B&go=Download"
+API_URL = "https://www.ariva.de/quote/historic/historic.csv?secu={secu_id}&boerse_id={boerse_id}&clean_split=1&clean_payout=1&clean_bezug=1&min_time=01.01.2018&max_time={day}.{month}.{year}&trenner=%3B&go=Download"
 PRIORITIZED_BOERSE_IDS = [45]
 
 
@@ -51,7 +52,8 @@ def accept_init_popup(my_driver):
 
 
 def download_etf_data_from_api(secu_id: int, boerse_id: int):
-    url = API_URL.format(secu_id=secu_id, boerse_id=boerse_id)
+    day, month, year = get_date()
+    url = API_URL.format(secu_id=secu_id, boerse_id=boerse_id, day=day, month=month, year=year)
     response = requests.get(url)
     if response.status_code == 200:
         filename = response.headers.get("Content-Disposition").split("=")[1]
@@ -81,6 +83,12 @@ def get_secu_id(my_driver) -> int:
         return a_tag.get_attribute("href").split("=")[1]
 
     return -1
+
+
+def get_date() -> (int, int, int):
+    date = datetime.today()
+
+    return date.day, date.month, date.year
 
 
 def get_boerse_id(my_driver) -> int:
