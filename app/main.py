@@ -78,9 +78,11 @@ def append_to_file(input_file: str, input_string: str) -> None:
 
 
 def get_secu_id(my_driver) -> int:
-    a_tag = my_driver.find_element(By.XPATH, '//a[@aria-label="TODO"]')
-    if a_tag is not None:
-        return a_tag.get_attribute("href").split("=")[1]
+    div = my_driver.find_element(By.ID, 'VIEWTRACKER')
+    if div is not None:
+        img = div.find_element(By.TAG_NAME, 'img')
+        src = img.get_attribute('src')
+        return src.split('__')[2]
 
     return -1
 
