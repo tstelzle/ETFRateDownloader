@@ -6,3 +6,4 @@ venv/
 /**/credentials.txt
 /**/links.error
 /**/links.exception
+/**/cookies.json

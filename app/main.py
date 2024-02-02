@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -17,6 +18,7 @@ ERROR_FILE = "links.exception"
 LOG_FILE = "etf.log"
 API_URL = "https://www.ariva.de/quote/historic/historic.csv?secu={secu_id}&boerse_id={boerse_id}&clean_split=1&clean_payout=1&clean_bezug=1&min_time=01.01.2018&max_time={day}.{month}.{year}&trenner=%3B&go=Download"
 PRIORITIZED_BOERSE_IDS = [45]
+COOKIE_FILE = "cookies.json"
 
 
 def read_file(file_name: str):
@@ -30,6 +32,11 @@ def read_file(file_name: str):
         lines.append(line)
 
     return lines
+
+
+def load_cookie():
+    with open(COOKIE_FILE, 'r') as cookie_file:
+        return json.load(cookie_file)
 
 
 def accept_init_popup(my_driver):
@@ -51,10 +58,10 @@ def accept_init_popup(my_driver):
         return my_driver
 
 
-def download_etf_data_from_api(secu_id: int, boerse_id: int):
+def download_etf_data_from_api(secu_id: int, boerse_id: int, login_cookies: dict):
     day, month, year = get_date()
     url = API_URL.format(secu_id=secu_id, boerse_id=boerse_id, day=day, month=month, year=year)
-    response = requests.get(url)
+    response = requests.get(url, cookies=login_cookies)
     if response.status_code == 200:
         filename = response.headers.get("Content-Disposition").split("=")[1]
         filename_with_directory = f"{DOWNLOAD_DIR}/{filename}"
@@ -125,6 +132,8 @@ if __name__ == '__main__':
 
     links = read_file("links.txt")
 
+    login_cookies = load_cookie()
+
     try:
         os.mknod(os.path.join(DOWNLOAD_DIR, ERROR_FILE), 0o777)
     except FileExistsError as e:
@@ -138,7 +147,7 @@ if __name__ == '__main__':
             if secu_id == -1:
                 raise Exception("Secu ID Not Found.")
             boerse_id = get_boerse_id(driver)
-            download_etf_data_from_api(secu_id, boerse_id)
+            download_etf_data_from_api(secu_id, boerse_id, login_cookies)
             logging.info("Downloaded: {0}".format(link))
         except Exception as e:
             logging.error("Downloading {0} with {1}".format(link, e))
